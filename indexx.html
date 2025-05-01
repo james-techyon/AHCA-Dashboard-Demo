@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHCA Medicaid Analytics Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+        }
+        .tab-content {
+            display: none;
+        }
+        .active-tab {
+            display: block;
+        }
+        .panel {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .insight-card {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0284c7;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .risk-high {
+            background-color: #fee2e2;
+            border-left: 4px solid #dc2626;
+        }
+        .risk-medium {
+            background-color: #fef3c7;
+            border-left: 4px solid #d97706;
+        }
+        .risk-low {
+            background-color: #d1fae5;
+            border-left: 4px solid #059669;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .drill-down {
+            cursor: pointer;
+            text-decoration: underline;
+            color: #0284c7;
+        }
+        .cohort-selector {
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            background-color: white;
+            margin-right: 10px;
+        }
+        .metric-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #0284c7;
+            margin: 0.5rem 0;
+        }
+        .metric-title {
+            font-size: 0.9rem;
+            color: #4b5563;
+            text-align: center;
+        }
+        .metric-trend-up {
+            color: #10b981;
+            font-size: 0.8rem;
+        }
+        .metric-trend-down {
+            color: #ef4444;
+            font-size: 0.8rem;
+        }
+        .action-btn {
+            background-color: #0284c7;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .action-btn:hover {
+            background-color: #0369a1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f9fafb;
+        }
+        .hidden-content {
+            display: none;
+        }
+        .donut-chart-container {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        /* Loading indicator */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #0284c7;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">AHCA Medicaid Analytics Dashboard</h1>
+            <p class="text-sm text-gray-500">Last Updated: May 1, 2025</p>
+        </div>
+
+        <!-- Key Metrics Overview -->
+        <div class="panel">
+            <h2 class="text-xl font-semibold mb-4">Key Performance Indicators</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="metric-card">
+                    <p class="metric-title">Total Medicaid Enrollment</p>
+                    <p class="metric-value">5.2M</p>
+                    <p class="metric-trend-up">↑ 3.2% from previous year</p>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-title">Avg. Monthly Cost Per Member</p>
+                    <p class="metric-value">$642</p>
+                    <p class="metric-trend-down">↓ 1.8% from previous year</p>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-title">Provider Network Adequacy</p>
+                    <p class="metric-value">92.4%</p>
+                    <p class="metric-trend-up">↑ 1.5% from previous year</p>
+                </div>
+                <div class="metric-card">
+                    <p class="metric-title">Quality Measure Compliance</p>
+                    <p class="metric-value">87.3%</p>
+                    <p class="metric-trend-up">↑ 2.7% from previous year</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="mb-4 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px" id="tab-nav">
+                <li class="mr-2">
+                    <a class="inline-block p-4 border-b-2 border-blue-500 rounded-t-lg text-blue-600 tab-button active" data-tab="population-health">Population Health</a>
+                </li>
+                <li class="mr-2">
+                    <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button" data-tab="claims-analysis">Claims Analysis</a>
+                </li>
+                <li class="mr-2">
+                    <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button" data-tab="emerging-risks">Emerging Risks</a>
+                </li>
+                <li class="mr-2">
+                    <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 tab-button" data-tab="provider-assessment">Provider Assessment</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Population Health Tab -->
+        <div id="population-health" class="tab-content active-tab">
+            <div class="panel">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Population Health Insights</h2>
+                    <div class="flex">
+                        <select class="cohort-selector" id="population-cohort-selector">
+                            <option value="all">All Members</option>
+                            <option value="pediatric">Pediatric (0-18)</option>
+                            <option value="adult">Adult (19-64)</option>
+                            <option value="elderly">Elderly (65+)</option>
+                        </select>
+                        <select class="cohort-selector" id="population-region-selector">
+                            <option value="all">All Regions</option>
+                            <option value="region1">Region 1</option>
+                            <option value="region2">Region 2</option>
+                            <option value="region3">Region 3</option>
+                            <option value="region4">Region 4</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Chronic Condition Prevalence</h3>
+                        <div class="chart-container">
+                            <canvas id="chronic-conditions-chart"></canvas>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>Diabetes (21.3%) and Hypertension (32.5%) remain the most prevalent chronic conditions among Medicaid recipients. Targeted interventions for these conditions could significantly improve outcomes and reduce costs.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Preventative Care Utilization</h3>
+                        <div class="chart-container">
+                            <canvas id="preventative-care-chart"></canvas>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>Well-child visits (78.2%) exceed target rates, while adult preventative screenings (62.4%) fall below targets. Member outreach programs could improve adult screening rates.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">Social Determinants of Health Impact</h3>
+                    <div class="chart-container">
+                        <canvas id="sdoh-impact-chart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div class="insight-card">
+                            <p class="font-semibold">Housing Stability</p>
+                            <p>Members with housing instability show 3.2x higher hospital readmission rates. The Behavioral Health and Supportive Housing pilot program has shown a 42% reduction in ED visits among enrolled participants.</p>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Transportation Access</p>
+                            <p>In regions with limited public transportation, missed appointment rates are 27% higher. Mobile health services and telehealth initiatives have reduced this gap by 15%.</p>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Food Security</p>
+                            <p>Members with food insecurity have 2.4x higher rates of uncontrolled chronic conditions. Nutrition benefit programs show a 31% improvement in condition management.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8" id="chronic-conditions-drill-down" style="display: none;">
+                    <h3 class="text-lg font-medium mb-4">Chronic Condition Management Effectiveness</h3>
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>Condition</th>
+                                <th>Prevalence</th>
+                                <th>Control Rate</th>
+                                <th>Year-over-Year Trend</th>
+                                <th>Cost Per Member</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Diabetes</td>
+                                <td>21.3%</td>
+                                <td>68.7%</td>
+                                <td>↑ 2.3%</td>
+                                <td>$14,320</td>
+                            </tr>
+                            <tr>
+                                <td>Hypertension</td>
+                                <td>32.5%</td>
+                                <td>72.4%</td>
+                                <td>↑ 3.1%</td>
+                                <td>$9,680</td>
+                            </tr>
+                            <tr>
+                                <td>Asthma</td>
+                                <td>18.7%</td>
+                                <td>65.2%</td>
+                                <td>↑ 1.8%</td>
+                                <td>$8,950</td>
+                            </tr>
+                            <tr>
+                                <td>Depression</td>
+                                <td>14.6%</td>
+                                <td>58.9%</td>
+                                <td>↑ 4.2%</td>
+                                <td>$12,470</td>
+                            </tr>
+                            <tr>
+                                <td>COPD</td>
+                                <td>9.3%</td>
+                                <td>61.5%</td>
+                                <td>↑ 0.8%</td>
+                                <td>$15,680</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Claims Analysis Tab -->
+        <div id="claims-analysis" class="tab-content">
+            <div class="panel">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Medical & Pharmacy Claims Analysis</h2>
+                    <div class="flex">
+                        <select class="cohort-selector" id="claims-time-selector">
+                            <option value="12-months">Last 12 Months</option>
+                            <option value="6-months">Last 6 Months</option>
+                            <option value="3-months">Last 3 Months</option>
+                            <option value="1-month">Last Month</option>
+                        </select>
+                        <select class="cohort-selector" id="claims-type-selector">
+                            <option value="all">All Claims</option>
+                            <option value="medical">Medical Only</option>
+                            <option value="pharmacy">Pharmacy Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Spending Trends by Service Category</h3>
+                        <div class="chart-container">
+                            <canvas id="spending-trends-chart"></canvas>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>Specialty pharmacy costs have increased 18.3% year-over-year, primarily driven by new high-cost medications for rare diseases. Implementing expanded rebate programs could save an estimated $42M annually.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Claim Distribution by Member Type</h3>
+                        <div class="chart-container">
+                            <canvas id="claim-distribution-chart"></canvas>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>High-utilization members (top 5%) account for 43.7% of total claims costs. Targeted case management for these members has shown a 12.5% cost reduction in pilot programs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-2">Pharmacy Utilization & Costs</h3>
+                    <div class="chart-container">
+                        <canvas id="pharmacy-costs-chart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="insight-card">
+                            <p class="font-semibold">Generic Utilization Impact</p>
+                            <p>Generic utilization rate is currently 75.2%, while brand drugs (19.2% of claims) account for 91.2% of total expenditures. Increasing generic utilization by 5% could save approximately $124M annually.</p>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Rebate Effectiveness</p>
+                            <p>Combined federal and supplemental rebates return 43.7% of prescription costs. Recent negotiation efforts for supplemental rebates on specialty drugs added $18.4M in annual savings.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8" id="cost-saving-opportunities">
+                    <h3 class="text-lg font-medium mb-4">Cost Saving Opportunities</h3>
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Estimated Annual Waste</th>
+                                <th>Intervention Strategy</th>
+                                <th>Potential Savings</th>
+                                <th>Implementation Difficulty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="drill-down" onclick="toggleDrillDown('duplicate-claims')">
+                                <td>Duplicate Claims</td>
+                                <td>$37.4M</td>
+                                <td>Enhanced Claim Validation</td>
+                                <td>$32.1M</td>
+                                <td>Medium</td>
+                            </tr>
+                            <tr id="duplicate-claims" class="hidden-content">
+                                <td colspan="5" class="bg-blue-50 p-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 class="font-medium">Duplicate Claims Pattern Analysis</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>50.3% from same provider on different dates</li>
+                                                <li>32.7% from different providers for same service</li>
+                                                <li>17.0% from system coding errors</li>
+                                            </ul>
+                                            <p class="mt-2">Implementing real-time duplicate claim detection could prevent 86% of these claims before payment.</p>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Top Providers with Duplicate Claims</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>Memorial Healthcare System (8.2%)</li>
+                                                <li>BayCare Health (7.5%)</li>
+                                                <li>Orlando Health (6.3%)</li>
+                                                <li>Jackson Health System (5.8%)</li>
+                                            </ul>
+                                            <p class="mt-2">Targeted provider education could reduce these rates by 64%.</p>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="drill-down" onclick="toggleDrillDown('medication-adherence')">
+                                <td>Medication Non-Adherence</td>
+                                <td>$62.3M</td>
+                                <td>Digital Health Monitoring</td>
+                                <td>$43.6M</td>
+                                <td>High</td>
+                            </tr>
+                            <tr id="medication-adherence" class="hidden-content">
+                                <td colspan="5" class="bg-blue-50 p-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 class="font-medium">Non-Adherence Impact by Condition</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>Diabetes: $18.7M in avoidable hospitalizations</li>
+                                                <li>Hypertension: $14.2M in avoidable ED visits</li>
+                                                <li>Mental Health: $22.1M in crisis interventions</li>
+                                                <li>Asthma: $7.3M in acute exacerbations</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Digital Monitoring Pilot Results</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>42% improvement in adherence rates</li>
+                                                <li>37% reduction in hospital admissions</li>
+                                                <li>28% reduction in ED visits</li>
+                                                <li>$1,820 average savings per enrolled member</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="drill-down" onclick="toggleDrillDown('inappropriate-ed')">
+                                <td>Inappropriate ED Utilization</td>
+                                <td>$58.9M</td>
+                                <td>Telehealth & Urgent Care</td>
+                                <td>$47.1M</td>
+                                <td>Medium</td>
+                            </tr>
+                            <tr id="inappropriate-ed" class="hidden-content">
+                                <td colspan="5" class="bg-blue-50 p-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 class="font-medium">ED Visit Analysis</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>42.3% of ED visits could have been handled in primary care</li>
+                                                <li>18.7% could have been handled via telehealth</li>
+                                                <li>24.1% could have been treated at urgent care</li>
+                                                <li>Average ED visit: $1,240 vs. PCP visit: $120</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Regional Variation</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>Region 1: 38.2% inappropriate utilization</li>
+                                                <li>Region 2: 46.7% inappropriate utilization</li>
+                                                <li>Region 3: 41.5% inappropriate utilization</li>
+                                                <li>Region 4: 51.3% inappropriate utilization</li>
+                                            </ul>
+                                            <p class="mt-2">24/7 nurse line implementation reduced inappropriate ED visits by 22.4% in pilot regions.</p>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Unnecessary Procedures</td>
+                                <td>$42.7M</td>
+                                <td>Evidence-Based Guidelines</td>
+                                <td>$36.3M</td>
+                                <td>High</td>
+                            </tr>
+                            <tr>
+                                <td>Fraud & Abuse</td>
+                                <td>$28.5M</td>
+                                <td>Advanced Analytics</td>
+                                <td>$25.6M</td>
+                                <td>Medium</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="insight-card mt-4">
+                        <p class="font-semibold">Recommended Action:</p>
+                        <p>Implement a phased approach targeting duplicate claims and inappropriate ED utilization first, which offer the lowest implementation difficulty with high potential savings ($79.2M combined).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emerging Risks Tab -->
+        <div id="emerging-risks" class="tab-content">
+            <div class="panel">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Emerging Risk Identification</h2>
+                    <div class="flex">
+                        <select class="cohort-selector" id="risk-time-horizon">
+                            <option value="3-months">3 Month Forecast</option>
+                            <option value="6-months">6 Month Forecast</option>
+                            <option value="12-months">12 Month Forecast</option>
+                        </select>
+                        <select class="cohort-selector" id="risk-threshold">
+                            <option value="high">High Risk Only</option>
+                            <option value="medium">Medium+ Risk</option>
+                            <option value="all">All Risk Levels</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Predicted High-Cost Members</h3>
+                        <div class="chart-container">
+                            <canvas id="high-cost-prediction-chart"></canvas>
+                        </div>
+                        <div class="insight-card risk-high">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>Predictive modeling identifies 8,743 members (0.17% of population) at high risk of becoming high-cost within the next 6 months. Early intervention could reduce costs by $103.5M annually.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Utilization Anomaly Detection</h3>
+                        <div class="chart-container">
+                            <canvas id="utilization-anomaly-chart"></canvas>
+                        </div>
+                        <div class="insight-card risk-medium">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>Three service areas show significant utilization surges: Behavioral Health (+18.7%), Home Health (+14.2%), and Specialty Pharmaceuticals (+22.3%). These warrant immediate investigation for potential overutilization.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">Risk Stratification by Patient Cohort</h3>
+                    <div class="chart-container">
+                        <canvas id="risk-stratification-chart"></canvas>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4 class="font-medium mb-2">High-Risk Patient Characteristics</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="insight-card risk-high">
+                                <p class="font-semibold">Multiple Chronic Conditions</p>
+                                <p>23,458 members have 3+ chronic conditions with poor management metrics. These members average 3.2x higher costs than the general population.</p>
+                            </div>
+                            <div class="insight-card risk-high">
+                                <p class="font-semibold">Mental Health + Physical Comorbidities</p>
+                                <p>18,324 members have both mental health diagnoses and physical health comorbidities, with 42% showing medication non-adherence.</p>
+                            </div>
+                            <div class="insight-card risk-high">
+                                <p class="font-semibold">Recent Hospital Discharge</p>
+                                <p>12,683 members were recently discharged from inpatient stays with high readmission risk scores. Targeted follow-up care reduced readmissions by 38% in pilot programs.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">External Risk Factor Integration</h3>
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>External Factor</th>
+                                <th>Current Status</th>
+                                <th>Projected Impact</th>
+                                <th>Risk Level</th>
+                                <th>Mitigation Strategy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="drill-down" onclick="toggleDrillDown('hurricane-season')">
+                                <td>Hurricane Season Forecasts</td>
+                                <td>Above Average Activity</td>
+                                <td>Potential disruption to care access</td>
+                                <td>High</td>
+                                <td>Emergency Preparedness</td>
+                            </tr>
+                            <tr id="hurricane-season" class="hidden-content">
+                                <td colspan="5" class="bg-blue-50 p-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 class="font-medium">Historical Impact Analysis</h4>
+                                            <p>Previous severe hurricane seasons showed:</p>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>42% increase in ED utilization during storms</li>
+                                                <li>28% medication adherence reduction</li>
+                                                <li>60% increase in crisis mental health services post-storm</li>
+                                                <li>$28.5M in additional costs during last major hurricane</li>
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Recommended Preparedness Actions</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>Early prescription refill exceptions (30-day supply)</li>
+                                                <li>Out-of-network coverage waivers during emergencies</li>
+                                                <li>Expanded telehealth coverage during evacuation periods</li>
+                                                <li>Dedicated case management for high-risk, electricity-dependent members</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Infectious Disease Outbreaks</td>
+                                <td>Moderate Influenza Activity</td>
+                                <td>Increased hospitalizations</td>
+                                <td>Medium</td>
+                                <td>Vaccination Campaigns</td>
+                            </tr>
+                            <tr>
+                                <td>Provider Market Changes</td>
+                                <td>Regional Hospital Consolidation</td>
+                                <td>Potential price increases</td>
+                                <td>Medium</td>
+                                <td>Contract Renegotiation</td>
+                            </tr>
+                            <tr>
+                                <td>Pharmaceutical Pipeline</td>
+                                <td>7 High-Cost Drugs Expected</td>
+                                <td>$43M annual cost increase</td>
+                                <td>High</td>
+                                <td>Alternative Treatment Pathways</td>
+                            </tr>
+                            <tr>
+                                <td>Legislative Changes</td>
+                                <td>Pending Federal Changes</td>
+                                <td>Eligibility expansions possible</td>
+                                <td>Medium</td>
+                                <td>Scenario Planning</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h3 class="text-lg font-medium mb-2">Risk Alert System</h3>
+                    <p class="mb-4">The dashboard provides automated alerts for unusual cost or utilization patterns that may indicate emerging risks.</p>
+                    
+                    <div class="border-l-4 border-red-500 bg-red-50 p-3 mb-3">
+                        <p class="font-bold">ALERT: Region 3 Behavioral Health Utilization Spike</p>
+                        <p>42.3% increase in behavioral health service utilization detected in Region 3 over the past 30 days, primarily for adolescent services. This exceeds the expected seasonal variation by 28.7%.</p>
+                        <button class="action-btn mt-2">Investigate</button>
+                    </div>
+                    
+                    <div class="border-l-4 border-yellow-500 bg-yellow-50 p-3 mb-3">
+                        <p class="font-bold">ALERT: Specialty Pharmacy Cost Trend</p>
+                        <p>Specialty pharmacy costs for oncology medications increased 17.8% above projections in the past quarter. Analysis shows a 23.2% increase in utilization rather than price increases.</p>
+                        <button class="action-btn mt-2">Investigate</button>
+                    </div>
+                    
+                    <div class="border-l-4 border-yellow-500 bg-yellow-50 p-3">
+                        <p class="font-bold">ALERT: Provider Network Change Impact</p>
+                        <p>The exit of Southeast Medical Group from the network is projected to affect 12,475 members, with potential disruptions in primary care access for 8,231 members in rural counties.</p>
+                        <button class="action-btn mt-2">Investigate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Provider Assessment Tab -->
+        <div id="provider-assessment" class="tab-content">
+            <div class="panel">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Provider Network Analysis</h2>
+                    <div class="flex">
+                        <select class="cohort-selector" id="provider-type-selector">
+                            <option value="all">All Providers</option>
+                            <option value="pcp">Primary Care</option>
+                            <option value="specialist">Specialists</option>
+                            <option value="hospital">Hospitals</option>
+                            <option value="ancillary">Ancillary</option>
+                        </select>
+                        <select class="cohort-selector" id="provider-region-selector">
+                            <option value="all">All Regions</option>
+                            <option value="region1">Region 1</option>
+                            <option value="region2">Region 2</option>
+                            <option value="region3">Region 3</option>
+                            <option value="region4">Region 4</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Provider Performance Ranking</h3>
+                        <div class="chart-container">
+                            <canvas id="provider-performance-chart"></canvas>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>27.3% of providers exceed quality and cost expectations, while 18.5% fall below thresholds on both metrics. Implementing a tiered network could incentivize higher-performing providers and save $86.3M annually.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-2">Network Adequacy Analysis</h3>
+                        <div class="chart-container">
+                            <canvas id="network-adequacy-chart"></canvas>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Key Insight:</p>
+                            <p>Significant provider shortages exist in behavioral health (72.4% adequacy) and dental care (78.1% adequacy). Telehealth expansions improved access by 15.3% in rural regions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-2">Provider Value Assessment</h3>
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th>Provider Type</th>
+                                <th>Quality Score</th>
+                                <th>Cost Efficiency</th>
+                                <th>Member Satisfaction</th>
+                                <th>Overall Value</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="drill-down" onclick="toggleDrillDown('pcp-value')">
+                                <td>Primary Care</td>
+                                <td>87.3%</td>
+                                <td>76.5%</td>
+                                <td>92.1%</td>
+                                <td>85.3%</td>
+                                <td><button class="action-btn">Details</button></td>
+                            </tr>
+                            <tr id="pcp-value" class="hidden-content">
+                                <td colspan="6" class="bg-blue-50 p-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 class="font-medium">Top Performing Primary Care Providers</h4>
+                                            <ol class="list-decimal ml-5 mt-2">
+                                                <li>Sunshine Family Medicine (97.8% value score)</li>
+                                                <li>Florida Health Partners (94.2% value score)</li>
+                                                <li>Coastal Primary Care (92.7% value score)</li>
+                                                <li>Central Florida Physicians (91.3% value score)</li>
+                                                <li>Miami Medical Group (90.8% value score)</li>
+                                            </ol>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Performance Differentiators</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li>High performers average 2.4 more preventative care visits per member</li>
+                                                <li>42% higher screening rates for chronic conditions</li>
+                                                <li>68% better medication adherence among patients</li>
+                                                <li>54% fewer avoidable ED visits</li>
+                                                <li>37% lower overall cost per attributed member</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="drill-down" onclick="toggleDrillDown('specialty-value')">
+                                <td>Specialists</td>
+                                <td>82.4%</td>
+                                <td>68.9%</td>
+                                <td>87.3%</td>
+                                <td>79.5%</td>
+                                <td><button class="action-btn">Details</button></td>
+                            </tr>
+                            <tr id="specialty-value" class="hidden-content">
+                                <td colspan="6" class="bg-blue-50 p-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 class="font-medium">Specialty Performance by Type</h4>
+                                            <table class="w-full text-sm mt-2">
+                                                <tr>
+                                                    <th>Specialty</th>
+                                                    <th>Value Score</th>
+                                                    <th>Network Adequacy</th>
+                                                </tr>
+                                                <tr>
+                                                    <td>Cardiology</td>
+                                                    <td>86.3%</td>
+                                                    <td>93.2%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Oncology</td>
+                                                    <td>88.7%</td>
+                                                    <td>87.8%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Neurology</td>
+                                                    <td>76.4%</td>
+                                                    <td>68.3%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Psychiatry</td>
+                                                    <td>71.5%</td>
+                                                    <td>58.7%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Endocrinology</td>
+                                                    <td>82.3%</td>
+                                                    <td>76.2%</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium">Improvement Opportunities</h4>
+                                            <ul class="list-disc ml-5 mt-2">
+                                                <li><strong>Psychiatry:</strong> Critical shortage and low performance scores; telehealth expansion recommended</li>
+                                                <li><strong>Neurology:</strong> Standard care pathway implementation could improve cost efficiency by 18%</li>
+                                                <li><strong>Gastroenterology:</strong> 32% variation in procedure costs; standardization opportunity</li>
+                                                <li><strong>Orthopedics:</strong> High imaging utilization (28% above benchmark); appropriate use criteria needed</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Hospitals</td>
+                                <td>78.6%</td>
+                                <td>72.1%</td>
+                                <td>81.5%</td>
+                                <td>77.4%</td>
+                                <td><button class="action-btn">Details</button></td>
+                            </tr>
+                            <tr>
+                                <td>Behavioral Health</td>
+                                <td>74.2%</td>
+                                <td>83.7%</td>
+                                <td>79.8%</td>
+                                <td>79.2%</td>
+                                <td><button class="action-btn">Details</button></td>
+                            </tr>
+                            <tr>
+                                <td>Skilled Nursing</td>
+                                <td>81.3%</td>
+                                <td>79.4%</td>
+                                <td>76.2%</td>
+                                <td>79.0%</td>
+                                <td><button class="action-btn">Details</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">Provider Network Optimization Opportunities</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="insight-card">
+                            <p class="font-semibold">Value-Based Contract Expansion</p>
+                            <p>Currently 32.4% of provider payments are tied to value-based arrangements. Expanding to 50% could improve quality metrics by 14.7% and reduce costs by 8.3%, based on pilot program results.</p>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Telehealth Integration</p>
+                            <p>Telehealth utilization varies widely across regions (8.3%-27.4%). Standardizing telehealth integration into care pathways could improve access by 23.7% and reduce transportation barriers.</p>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Specialty Network Redesign</p>
+                            <p>Creating Centers of Excellence for high-cost procedures could concentrate volume at high-performing facilities, improving outcomes by 18.2% and reducing costs by 12.7%.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-medium mb-4">Digital Health Program Integration</h3>
+                    <div class="chart-container">
+                        <canvas id="digital-health-chart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="insight-card">
+                            <p class="font-semibold">Remote Patient Monitoring</p>
+                            <p>Members enrolled in RPM programs for diabetes and hypertension show 32.4% fewer hospitalizations and 27.8% better medication adherence. Expanding from current 8,743 participants to 25,000 eligible members could save $28.3M annually.</p>
+                        </div>
+                        <div class="insight-card">
+                            <p class="font-semibold">Behavioral Health Apps</p>
+                            <p>Digital behavioral health interventions show 19.6% reduction in crisis service utilization. Integration with provider workflows improved engagement by 42.3% in pilot regions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="panel mt-8">
+            <h2 class="text-xl font-semibold mb-4">Dashboard Summary & Recommendations</h2>
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-2">Key Findings</h3>
+                <ol class="list-decimal ml-5">
+                    <li class="mb-2">Population health metrics reveal significant opportunities in chronic condition management, particularly for diabetes and hypertension. The data shows that addressing social determinants of health has measurable impacts on health outcomes and costs.</li>
+                    <li class="mb-2">Medical and pharmacy claims analysis identifies $229.8M in potential annual savings through targeted interventions in duplicate claims, medication adherence, and inappropriate ED utilization.</li>
+                    <li class="mb-2">Predictive analytics have identified 8,743 members at high risk of becoming high-cost utilizers, with early intervention potential to reduce costs by $103.5M.</li>
+                    <li class="mb-2">Provider network analysis demonstrates substantial variation in provider performance, with significant opportunities to improve value through network optimization and value-based contracting.</li>
+                    <li class="mb-2">Digital health program integration shows promising results, particularly in remote patient monitoring and behavioral health applications.</li>
+                </ol>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-2">Recommended Actions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 border border-blue-200 rounded-lg">
+                        <h4 class="font-medium text-blue-700">Short-Term Priorities (0-6 months)</h4>
+                        <ul class="list-disc ml-5 mt-2">
+                            <li>Implement enhanced claims validation to reduce duplicate payments ($32.1M opportunity)</li>
+                            <li>Expand telehealth access in behavioral health shortage areas</li>
+                            <li>Deploy case management for predicted high-risk members</li>
+                            <li>Launch medication adherence program targeting highest-risk populations</li>
+                            <li>Expand behavioral health and supportive housing pilot program to additional regions</li>
+                        </ul>
+                    </div>
+                    <div class="p-4 border border-blue-200 rounded-lg">
+                        <h4 class="font-medium text-blue-700">Medium-Term Initiatives (6-18 months)</h4>
+                        <ul class="list-disc ml-5 mt-2">
+                            <li>Implement tiered provider network based on performance metrics</li>
+                            <li>Expand value-based contracting to 50% of provider payments</li>
+                            <li>Develop Centers of Excellence program for high-cost procedures</li>
+                            <li>Scale remote patient monitoring to 25,000 eligible members</li>
+                            <li>Implement comprehensive SDOH screening and referral system</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-medium mb-2">Anticipated Benefits</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="metric-card">
+                        <p class="metric-title">Projected Annual Cost Savings</p>
+                        <p class="metric-value">$412.6M</p>
+                        <p class="text-sm">Implementation cost: $67.3M</p>
+                        <p class="text-sm">ROI: 6.1:1</p>
+                    </div>
+                    <div class="metric-card">
+                        <p class="metric-title">Quality Measure Improvement</p>
+                        <p class="metric-value">+14.3%</p>
+                        <p class="text-sm">Key HEDIS measures average</p>
+                        <p class="text-sm">Across all measures</p>
+                    </div>
+                    <div class="metric-card">
+                        <p class="metric-title">Avoidable Utilization Reduction</p>
+                        <p class="metric-value">-27.8%</p>
+                        <p class="text-sm">ED visits, readmissions</p>
+                        <p class="text-sm">And preventable admissions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center text-gray-500 text-sm mt-8">
+            <p>AHCA Medicaid Analytics Dashboard | Developed for AHCA | Generated on May 1, 2025</p>
+            <p>This dashboard identifies areas for improvement to enhance Medicaid quality of service and reduce costs.</p>
+        </div>
+    </div>
+
+    <!-- Tooltips -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.remove('border-blue-500');
+                    btn.classList.remove('text-blue-600');
+                    btn.classList.add('border-transparent');
+                });
+                
+                // Hide all tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active-tab');
+                });
+                
+                // Show the selected tab content
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active-tab');
+                
+                // Add active class to the clicked button
+                button.classList.add('active');
+                button.classList.add('border-blue-500');
+                button.classList.add('text-blue-600');
+            });
+        });
+
+        // Toggle drill-down content
+        function toggleDrillDown(id) {
+            const content = document.getElementById(id);
+            if (content.classList.contains('hidden-content')) {
+                content.classList.remove('hidden-content');
+            } else {
+                content.classList.add('hidden-content');
+            }
+        }
+
+        // Population Health Charts
+        const chronicConditionsCtx = document.getElementById('chronic-conditions-chart').getContext('2d');
+        const chronicConditionsChart = new Chart(chronicConditionsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Diabetes', 'Hypertension', 'Asthma', 'Depression', 'COPD', 'Heart Disease'],
+                datasets: [{
+                    label: 'Prevalence (%)',
+                    data: [21.3, 32.5, 18.7, 14.6, 9.3, 12.1],
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(context) {
+                                const costs = ['$14,320', '$9,680', '$8,950', '$12,470', '$15,680', '$13,240'];
+                                return `Avg. Annual Cost Per Member: ${costs[context.dataIndex]}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Prevalence (%)'
+                        }
+                    }
+                },
+                onClick: function() {
+                    const drillDown = document.getElementById('chronic-conditions-drill-down');
+                    drillDown.style.display = drillDown.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+        });
+
+        const preventativeCareCtx = document.getElementById('preventative-care-chart').getContext('2d');
+        const preventativeCareChart = new Chart(preventativeCareCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Well-Child Visits', 'Adult Preventative Screenings', 'Immunizations', 'Cancer Screenings', 'Dental Check-ups'],
+                datasets: [{
+                    label: 'Utilization Rate (%)',
+                    data: [78.2, 62.4, 73.8, 58.6, 44.3],
+                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 1
+                }, {
+                    label: 'Target Rate (%)',
+                    data: [75, 70, 80, 65, 60],
+                    type: 'line',
+                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                    borderColor: 'rgb(239, 68, 68)',
+                    borderWidth: 2,
+                    pointStyle: 'star',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Utilization Rate (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const sdohImpactCtx = document.getElementById('sdoh-impact-chart').getContext('2d');
+        const sdohImpactChart = new Chart(sdohImpactCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Housing Stability', 'Transportation Access', 'Food Security', 'Education Level', 'Income Level', 'Social Support'],
+                datasets: [{
+                    label: 'Impact on Health Outcomes',
+                    data: [4.8, 3.6, 4.3, 3.2, 3.9, 3.5],
+                    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgb(59, 130, 246)'
+                }, {
+                    label: 'Current AHCA Program Coverage',
+                    data: [3.2, 2.8, 2.5, 1.5, 1.8, 2.2],
+                    backgroundColor: 'rgba(220, 38, 38, 0.3)',
+                    borderColor: 'rgb(220, 38, 38)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgb(220, 38, 38)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: {
+                            display: true
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 5,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.r !== null) {
+                                    label += context.parsed.r + '/5';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Claims Analysis Charts
+        const spendingTrendsCtx = document.getElementById('spending-trends-chart').getContext('2d');
+        const spendingTrendsChart = new Chart(spendingTrendsCtx, {
+            type: 'line',
+            data: {
+                labels: ['Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024', 'Q1 2025'],
+                datasets: [{
+                    label: 'Inpatient',
+                    data: [98.2, 101.4, 97.8, 104.6, 102.3],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Outpatient',
+                    data: [56.7, 58.3, 60.1, 62.4, 63.8],
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Pharmacy',
+                    data: [72.5, 76.8, 81.2, 87.6, 94.1],
+                    borderColor: 'rgb(245, 158, 11)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Professional',
+                    data: [45.6, 47.2, 46.8, 48.1, 49.3],
+                    borderColor: 'rgb(107, 114, 128)',
+                    backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += '$' + context.parsed.y + 'M';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Expenditure ($ Millions)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const claimDistributionCtx = document.getElementById('claim-distribution-chart').getContext('2d');
+        const claimDistributionChart = new Chart(claimDistributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Top 1% (High-Cost)', 'Next 4%', 'Next 15%', 'Next 30%', 'Bottom 50%'],
+                datasets: [{
+                    data: [22.7, 21.0, 28.3, 19.5, 8.5],
+                    backgroundColor: [
+                        'rgb(220, 38, 38)',
+                        'rgb(217, 119, 6)',
+                        'rgb(217, 119, 6)',
+                        'rgb(5, 150, 105)',
+                        'rgb(37, 99, 235)'
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.formattedValue || '';
+                                return label + ': ' + value + '% of total claims cost';
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+
+        const pharmacyCostsCtx = document.getElementById('pharmacy-costs-chart').getContext('2d');
+        const pharmacyCostsChart = new Chart(pharmacyCostsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Specialty', 'Brand', 'Generic', 'Biosimilar'],
+                datasets: [{
+                    label: 'Claims Volume (%)',
+                    data: [5.8, 13.4, 75.2, 5.6],
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    yAxisID: 'volume'
+                }, {
+                    label: 'Total Cost (%)',
+                    data: [58.4, 32.8, 6.2, 2.6],
+                    backgroundColor: 'rgba(220, 38, 38, 0.6)',
+                    yAxisID: 'cost'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    volume: {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Claims Volume (%)'
+                        }
+                    },
+                    cost: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Total Cost (%)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Emerging Risks Charts
+        const highCostPredictionCtx = document.getElementById('high-cost-prediction-chart').getContext('2d');
+        const highCostPredictionChart = new Chart(highCostPredictionCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'High Risk Members',
+                    data: generateRiskData(100, 0.7, 0.9, 0.7, 0.9),
+                    backgroundColor: 'rgba(220, 38, 38, 0.7)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }, {
+                    label: 'Medium Risk Members',
+                    data: generateRiskData(150, 0.4, 0.7, 0.4, 0.7),
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }, {
+                    label: 'Low Risk Members',
+                    data: generateRiskData(200, 0.1, 0.4, 0.1, 0.4),
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Comorbidity Complexity'
+                        },
+                        min: 0,
+                        max: 1
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Utilization Intensity'
+                        },
+                        min: 0,
+                        max: 1
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Risk Score: ${(context.raw.x * context.raw.y * 100).toFixed(1)}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function generateRiskData(count, minX, maxX, minY, maxY) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push({
+                    x: minX + Math.random() * (maxX - minX),
+                    y: minY + Math.random() * (maxY - minY)
+                });
+            }
+            return data;
+        }
+
+        const utilizationAnomalyCtx = document.getElementById('utilization-anomaly-chart').getContext('2d');
+        const utilizationAnomalyChart = new Chart(utilizationAnomalyCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Behavioral Health',
+                    data: [100, 102, 105, 104, 106, 108, 112, 115, 120, 128, 136, 142],
+                    borderColor: 'rgb(220, 38, 38)',
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'Home Health',
+                    data: [100, 101, 103, 105, 104, 106, 108, 110, 112, 115, 118, 122],
+                    borderColor: 'rgb(245, 158, 11)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'Specialty Pharma',
+                    data: [100, 103, 106, 108, 112, 115, 118, 121, 125, 130, 134, 142],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }, {
+                    label: 'Emergency Dept',
+                    data: [100, 102, 101, 103, 102, 104, 105, 106, 104, 105, 106, 108],
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Utilization Index (Jan = 100)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const riskStratificationCtx = document.getElementById('risk-stratification-chart').getContext('2d');
+        const riskStratificationChart = new Chart(riskStratificationCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Low Risk (0-30)', 'Medium Risk (31-70)', 'High Risk (71-90)', 'Severe Risk (91-100)'],
+                datasets: [{
+                    label: 'Member Count',
+                    data: [3250000, 1720000, 187000, 43000],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.6)',
+                        'rgba(245, 158, 11, 0.6)',
+                        'rgba(239, 68, 68, 0.6)',
+                        'rgba(139, 0, 0, 0.6)'
+                    ],
+                    yAxisID: 'members'
+                }, {
+                    label: 'Avg. Annual Cost per Member',
+                    data: [1240, 4860, 18740, 87320],
+                    type: 'line',
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    yAxisID: 'cost'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    members: {
+                        type: 'linear',
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Member Count'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return value / 1000000 + 'M';
+                                } else if (value >= 1000) {
+                                    return value / 1000 + 'K';
+                                }
+                                return value;
+                            }
+                        }
+                    },
+                    cost: {
+                        type: 'linear',
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Avg. Annual Cost ($)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.datasetIndex === 0) {
+                                        if (context.parsed.y >= 1000000) {
+                                            return label + (context.parsed.y / 1000000).toFixed(2) + 'M members';
+                                        } else if (context.parsed.y >= 1000) {
+                                            return label + (context.parsed.y / 1000).toFixed(1) + 'K members';
+                                        }
+                                        return label + context.parsed.y + ' members';
+                                    } else {
+                                        return label + '$' + context.parsed.y;
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Provider Assessment Charts
+        const providerPerformanceCtx = document.getElementById('provider-performance-chart').getContext('2d');
+        const providerPerformanceChart = new Chart(providerPerformanceCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Primary Care',
+                    data: generateProviderData(40, 0.5, 1.0, 0.5, 1.0),
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }, {
+                    label: 'Specialists',
+                    data: generateProviderData(35, 0.4, 0.9, 0.4, 0.9),
+                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }, {
+                    label: 'Hospitals',
+                    data: generateProviderData(25, 0.3, 0.8, 0.3, 0.8),
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    pointRadius: 8,
+                    pointHoverRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Quality Score'
+                        },
+                        min: 0,
+                        max: 1
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Cost Efficiency'
+                        },
+                        min: 0,
+                        max: 1
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Value Score: ${((context.raw.x + context.raw.y) / 2 * 100).toFixed(1)}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function generateProviderData(count, minX, maxX, minY, maxY) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push({
+                    x: minX + Math.random() * (maxX - minX),
+                    y: minY + Math.random() * (maxY - minY)
+                });
+            }
+            return data;
+        }
+
+        const networkAdequacyCtx = document.getElementById('network-adequacy-chart').getContext('2d');
+        const networkAdequacyChart = new Chart(networkAdequacyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Primary Care', 'Specialty Care', 'Behavioral Health', 'Dental', 'Hospital', 'Ancillary'],
+                datasets: [{
+                    label: 'Current Adequacy',
+                    data: [94.6, 87.3, 72.4, 78.1, 91.2, 89.5],
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    order: 2
+                }, {
+                    label: 'Target',
+                    data: [90, 85, 85, 85, 90, 90],
+                    type: 'line',
+                    borderColor: 'rgb(220, 38, 38)',
+                    borderWidth: 2,
+                    pointStyle: 'rectRot',
+                    pointRadius: 7,
+                    order: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Network Adequacy (%)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const digitalHealthCtx = document.getElementById('digital-health-chart').getContext('2d');
+        const digitalHealthChart = new Chart(digitalHealthCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Remote Patient Monitoring', 'Telehealth Services', 'Behavioral Health Apps', 'Medication Adherence Tools', 'Health Education Platforms'],
+                datasets: [{
+                    label: 'Current Enrollment',
+                    data: [8743, 142350, 27826, 53412, 198634],
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                    order: 2
+                }, {
+                    label: 'Target Eligible Population',
+                    data: [25000, 250000, 85000, 120000, 350000],
+                    type: 'line',
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    pointStyle: 'star',
+                    pointRadius: 7,
+                    order: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Member Count'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return value / 1000000 + 'M';
+                                } else if (value >= 1000) {
+                                    return value / 1000 + 'K';
+                                }
+                                return value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.parsed.y >= 1000000) {
+                                        return label + (context.parsed.y / 1000000).toFixed(2) + 'M members';
+                                    } else if (context.parsed.y >= 1000) {
+                                        return label + (context.parsed.y / 1000).toFixed(1) + 'K members';
+                                    }
+                                    return label + context.parsed.y + ' members';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cohort selectors event listeners
+        document.getElementById('population-cohort-selector').addEventListener('change', function() {
+            // Simulate loading data for selected cohort
+            // Would typically make an API call here to get new data
+            const loading = document.createElement('span');
+            loading.className = 'loading';
+            this.parentNode.appendChild(loading);
+            
+            setTimeout(() => {
+                loading.remove();
+                // Update charts with "new" data
+                updatePopulationCharts(this.value);
+            }, 1000);
+        });
+
+        document.getElementById('population-region-selector').addEventListener('change', function() {
+            const loading = document.createElement('span');
+            loading.className = 'loading';
+            this.parentNode.appendChild(loading);
+            
+            setTimeout(() => {
+                loading.remove();
+                updatePopulationCharts(document.getElementById('population-cohort-selector').value, this.value);
+            }, 1000);
+        });
+
+        function updatePopulationCharts(cohort, region = 'all') {
+            // Simulate data updates based on selected cohort and region
+            let chronicData, preventativeData;
+            
+            if (cohort === 'pediatric') {
+                chronicData = [4.7, 3.2, 22.4, 8.3, 0.5, 1.3];
+                preventativeData = [86.3, 'N/A', 84.2, 'N/A', 68.4];
+            } else if (cohort === 'adult') {
+                chronicData = [24.8, 36.2, 16.3, 18.7, 9.8, 11.2];
+                preventativeData = ['N/A', 62.4, 58.7, 58.6, 38.2];
+            } else if (cohort === 'elderly') {
+                chronicData = [31.2, 68.4, 12.6, 16.7, 24.5, 38.7];
+                preventativeData = ['N/A', 71.8, 43.6, 72.4, 28.6];
+            } else {
+                chronicData = [21.3, 32.5, 18.7, 14.6, 9.3, 12.1];
+                preventativeData = [78.2, 62.4, 73.8, 58.6, 44.3];
+            }
+            
+            // Apply regional variations if specific region selected
+            if (region !== 'all') {
+                // Adjust data slightly to show regional differences
+                chronicData = chronicData.map(val => val * (0.85 + Math.random() * 0.3));
+                preventativeData = preventativeData.map(val => val === 'N/A' ? val : val * (0.85 + Math.random() * 0.3));
+            }
+            
+            // Update charts with new data
+            chronicConditionsChart.data.datasets[0].data = chronicData;
+            chronicConditionsChart.update();
+            
+            // Handle 'N/A' values for preventative chart
+            const numericPreventativeData = preventativeData.map(val => val === 'N/A' ? null : val);
+            preventativeCareChart.data.datasets[0].data = numericPreventativeData;
+            preventativeCareChart.update();
+        }
+
+        // Set up other selector event listeners (similar pattern would be used)
+        document.getElementById('claims-time-selector').addEventListener('change', function() {
+            const loading = document.createElement('span');
+            loading.className = 'loading';
+            this.parentNode.appendChild(loading);
+            
+            setTimeout(() => {
+                loading.remove();
+                // Would update claims charts here
+            }, 1000);
+        });
+
+        document.getElementById('claims-type-selector').addEventListener('change', function() {
+            const loading = document.createElement('span');
+            loading.className = 'loading';
+            this.parentNode.appendChild(loading);
+            
+            setTimeout(() => {
+                loading.remove();
+                // Would update claims charts here
+            }, 1000);
+        });
+
+        // Simulating "Investigate" button clicks
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering parent row click events
+                alert('Investigation launched. A detailed analysis report will be generated.');
+            });
+        });
+    </script>
+</body>
+</html>
