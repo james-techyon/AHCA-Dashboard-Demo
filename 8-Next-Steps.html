@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHCA Medicaid Analytics Solution - Next Steps & Implementation</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .slide-background .pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(42, 163, 139, 0.05) 0%, rgba(42, 163, 139, 0) 20%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0) 20%);
+        }
+        .slide-background .accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #2aa38b, #3b82f6);
+        }
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            padding: 50px 60px;
+            height: 620px;
+            display: flex;
+            flex-direction: column;
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 20px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .action-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid;
+            height: 100%;
+        }
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        .impact-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        .impact-item:hover {
+            transform: translateX(5px);
+        }
+        .impact-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .action-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 600;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .contact-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-right: 10px;
+            transition: background-color 0.2s;
+        }
+        .contact-badge:hover {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+        .page-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-background">
+            <div class="pattern"></div>
+            <div class="accent"></div>
+        </div>
+        
+        <div class="logo-container">
+            <span>AHCA Medicaid</span>
+        </div>
+        
+        <div class="slide-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Next Steps & Implementation</h1>
+                <p class="text-gray-600 mt-1">Moving forward with the AHCA Medicaid Analytics Solution to transform data into actionable insights</p>
+            </div>
+            
+            <div class="grid grid-cols-12 gap-6 flex-grow">
+                <!-- Left Column - Tangible Impact -->
+                <div class="col-span-5">
+                    <h3 class="font-semibold text-gray-800 mb-4">Tangible Impact</h3>
+                    
+                    <div class="impact-item">
+                        <div class="impact-icon bg-blue-100 text-blue-600">
+                            <i class="fas fa-heartbeat text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Enhanced Population Health</h4>
+                            <p class="text-sm text-gray-600">
+                                Comprehensive risk identification driving interventions for chronic disease management and preventive care
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-item">
+                        <div class="impact-icon bg-green-100 text-green-600">
+                            <i class="fas fa-dollar-sign text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Fiscal Responsibility</h4>
+                            <p class="text-sm text-gray-600">
+                                Projected annual savings of $68M through waste reduction, fraud detection, and operational efficiency
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-item">
+                        <div class="impact-icon bg-purple-100 text-purple-600">
+                            <i class="fas fa-users text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Provider Value Optimization</h4>
+                            <p class="text-sm text-gray-600">
+                                Data-driven network management aligning provider incentives with quality outcomes and cost control
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="impact-item">
+                        <div class="impact-icon bg-yellow-100 text-yellow-600">
+                            <i class="fas fa-chart-line text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-800">Proactive Risk Management</h4>
+                            <p class="text-sm text-gray-600">
+                                Early detection of emerging health and financial risks through advanced predictive analytics
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Next Steps & Contact -->
+                <div class="col-span-7">
+                    <div class="grid grid-cols-2 gap-4 h-full">
+                        <div class="action-card" style="border-left-color: #3b82f6;">
+                            <h3 class="font-semibold text-gray-800 mb-4">Implementation Steps</h3>
+                            
+                            <div class="action-step">
+                                <div class="step-number">1</div>
+                                <div>
+                                    <h4 class="font-medium text-gray-800">Initial Assessment</h4>
+                                    <p class="text-xs text-gray-600">Technical evaluation and requirements gathering with stakeholders</p>
+                                </div>
+                            </div>
+                            
+                            <div class="action-step">
+                                <div class="step-number">2</div>
+                                <div>
+                                    <h4 class="font-medium text-gray-800">Data Integration</h4>
+                                    <p class="text-xs text-gray-600">Connect existing AHCA data sources and implement ETL processes</p>
+                                </div>
+                            </div>
+                            
+                            <div class="action-step">
+                                <div class="step-number">3</div>
+                                <div>
+                                    <h4 class="font-medium text-gray-800">Pilot Deployment</h4>
+                                    <p class="text-xs text-gray-600">Initial rollout with key users for validation and refinement</p>
+                                </div>
+                            </div>
+                            
+                            <div class="action-step">
+                                <div class="step-number">4</div>
+                                <div>
+                                    <h4 class="font-medium text-gray-800">Full-Scale Launch</h4>
+                                    <p class="text-xs text-gray-600">System-wide implementation with training and support</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-center">
+                                <div class="px-4 py-2 bg-blue-600 text-white rounded-lg inline-block font-medium cursor-pointer hover:bg-blue-700 transition duration-300">
+                                    <i class="fas fa-calendar-alt mr-2"></i> Schedule Implementation Call
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="action-card" style="border-left-color: #10b981;">
+                            <h3 class="font-semibold text-gray-800 mb-4">Get Started Today</h3>
+                            
+                            <p class="text-sm text-gray-600 mb-4">
+                                Our team is ready to help you transform Medicaid data management and analytics for improved outcomes and cost efficiency.
+                            </p>
+                            
+                            <div class="bg-gray-50 p-3 rounded-lg mb-4">
+                                <h4 class="font-medium text-gray-800 mb-2">Implementation Timeline</h4>
+                                <div class="text-sm">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-600">Assessment Phase</span>
+                                        <span class="font-medium">2-3 weeks</span>
+                                    </div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-600">Initial Deployment</span>
+                                        <span class="font-medium">4-6 weeks</span>
+                                    </div>
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-gray-600">Full Implementation</span>
+                                        <span class="font-medium">3-4 months</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h4 class="font-medium text-gray-800 mb-2">Contact Information</h4>
+                            <div class="space-y-2">
+                                <div class="contact-badge">
+                                    <i class="fas fa-envelope mr-2"></i> medicaid.analytics@ahca.fl.gov
+                                </div>
+                                <div class="contact-badge">
+                                    <i class="fas fa-phone mr-2"></i> (850) 412-4000
+                                </div>
+                                <div class="contact-badge">
+                                    <i class="fas fa-globe mr-2"></i> ahca.myflorida.com/medicaid
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 bg-green-50 p-3 rounded-lg">
+                                <div class="flex items-start">
+                                    <i class="fas fa-lightbulb text-yellow-500 mt-1 mr-2"></i>
+                                    <p class="text-sm text-gray-700">
+                                        Request a personalized demo featuring your own data to see the immediate impact on your specific use cases.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-auto text-center">
+                <p class="text-gray-500 text-sm italic">
+                    Transform Medicaid data into actionable insights for better health outcomes, operational efficiency, and fiscal responsibility
+                </p>
+            </div>
+            
+            <div class="page-indicator">8 / 8</div>
+        </div>
+    </div>
+</body>
+</html>

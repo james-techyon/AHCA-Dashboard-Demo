@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHCA Medicaid Analytics Solution - Medical and Pharmacy Claims Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .slide-background .pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(42, 163, 139, 0.05) 0%, rgba(42, 163, 139, 0) 20%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0) 20%);
+        }
+        .slide-background .accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #2aa38b, #3b82f6);
+        }
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            padding: 50px 60px;
+            height: 620px;
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 20px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            height: 220px;
+            margin-top: 10px;
+        }
+        .small-chart-container {
+            position: relative;
+            height: 180px;
+            margin-top: 5px;
+        }
+        .feature-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: 100%;
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-3px);
+        }
+        .stats-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 15px;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 10px;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+        .alert-card {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .trend-up {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        .trend-down {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .badge-blue {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .badge-green {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .badge-red {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        .page-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-background">
+            <div class="pattern"></div>
+            <div class="accent"></div>
+        </div>
+        
+        <div class="logo-container">
+            <span>AHCA Medicaid</span>
+        </div>
+        
+        <div class="slide-content">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Module 2: Medical & Pharmacy Claims Analysis</h1>
+                <p class="text-gray-600 mt-1">Comprehensive claims reporting with trend analysis, cost containment opportunities, and anomaly detection</p>
+            </div>
+            
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Left Column - Pharmacy Analysis -->
+                <div class="col-span-7">
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Pharmacy Claims Trend Analysis</h3>
+                            <div class="flex space-x-2">
+                                <div class="text-xs py-1 px-2 bg-blue-50 text-blue-600 rounded-md cursor-pointer">Monthly</div>
+                                <div class="text-xs py-1 px-2 bg-gray-100 text-gray-600 rounded-md cursor-pointer">Quarterly</div>
+                                <div class="text-xs py-1 px-2 bg-gray-100 text-gray-600 rounded-md cursor-pointer">Yearly</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="pharmacyClaimsChart"></canvas>
+                        </div>
+                        <div class="flex mt-2 text-xs items-center justify-between">
+                            <div class="flex space-x-3">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded bg-blue-500 mr-1"></div>
+                                    <span>Brand</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded bg-green-500 mr-1"></div>
+                                    <span>Generic</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded bg-yellow-500 mr-1"></div>
+                                    <span>Specialty</span>
+                                </div>
+                            </div>
+                            <div class="text-blue-600 cursor-pointer">
+                                <i class="fas fa-layer-group mr-1"></i> Drill Down
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="feature-card border-t-4 border-green-500">
+                            <div class="flex items-start">
+                                <div class="bg-green-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-pills text-green-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">Drug Utilization Review</h3>
+                                    <p class="text-xs text-gray-600 mt-1">AI-powered analysis identifies medication therapy management opportunities and adherence issues.</p>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="text-xs font-medium text-gray-700 flex justify-between mb-1">
+                                    <span>Medication Adherence</span>
+                                    <span>68%</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div class="h-2 bg-green-500 rounded-full" style="width: 68%"></div>
+                                </div>
+                                <div class="mt-2 grid grid-cols-2 gap-1">
+                                    <div class="badge badge-blue">12.5k Gap Alerts</div>
+                                    <div class="badge badge-green">$3.2M Savings</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-card border-t-4 border-red-500">
+                            <div class="flex items-start">
+                                <div class="bg-red-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">Duplicate Claim Detection</h3>
+                                    <p class="text-xs text-gray-600 mt-1">Advanced algorithms identify potential duplicate billings and erroneous claims for recovery.</p>
+                                </div>
+                            </div>
+                            <div class="alert-card mt-2">
+                                <div class="text-sm font-medium text-red-700 mb-1">Potential Duplicate Claims</div>
+                                <div class="grid grid-cols-3 gap-1 text-xs text-gray-700">
+                                    <div class="text-center">
+                                        <div class="font-bold">842</div>
+                                        <div>Flagged</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="font-bold">$1.2M</div>
+                                        <div>Potential Recovery</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="font-bold">82%</div>
+                                        <div>Accuracy Rate</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Medical Claims & Cost Analysis -->
+                <div class="col-span-5">
+                    <div class="stats-container mb-4">
+                        <h3 class="font-semibold text-gray-700 mb-2">Key Claims Metrics</h3>
+                        <div class="grid grid-cols-4">
+                            <div class="stat-item">
+                                <div class="stat-value text-blue-500">$486<span class="text-sm">M</span></div>
+                                <div class="stat-label">Total Claims</div>
+                                <div class="trend-indicator trend-up text-xs">
+                                    <i class="fas fa-caret-up mr-1"></i>3.2%
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value text-green-500">5.3<span class="text-sm">M</span></div>
+                                <div class="stat-label">Claim Volume</div>
+                                <div class="trend-indicator trend-up text-xs">
+                                    <i class="fas fa-caret-up mr-1"></i>2.1%
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value text-purple-500">$92</div>
+                                <div class="stat-label">Avg Cost/Claim</div>
+                                <div class="trend-indicator trend-up text-xs">
+                                    <i class="fas fa-caret-up mr-1"></i>1.2%
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value text-red-500">8.2<span class="text-sm">%</span></div>
+                                <div class="stat-label">Claim Denial Rate</div>
+                                <div class="trend-indicator trend-down text-xs">
+                                    <i class="fas fa-caret-down mr-1"></i>0.5%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card border-t-4 border-blue-500 mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Medical Claims by Service Category</h3>
+                            <div class="text-sm text-blue-600 cursor-pointer"><i class="fas fa-sliders-h"></i></div>
+                        </div>
+                        <div class="small-chart-container">
+                            <canvas id="serviceTypeChart"></canvas>
+                        </div>
+                        <div class="text-xs text-gray-500 italic text-right mt-1">
+                            Click to drill down by provider, region, or diagnosis
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card border-t-4 border-yellow-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Cost Containment Opportunities</h3>
+                            <div class="badge badge-green">$18.4M Potential Savings</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-2">
+                            <div class="bg-blue-50 p-2 rounded-lg">
+                                <div class="text-sm font-medium text-blue-800 mb-1">Provider Network Leakage</div>
+                                <div class="flex items-center">
+                                    <div class="h-2 w-full bg-gray-200 rounded-full">
+                                        <div class="h-2 bg-blue-600 rounded-full" style="width: 23%"></div>
+                                    </div>
+                                    <span class="text-xs ml-2 text-blue-800 font-medium">23%</span>
+                                </div>
+                                <div class="text-xs text-blue-800 mt-1">$7.2M opportunity</div>
+                            </div>
+                            <div class="bg-green-50 p-2 rounded-lg">
+                                <div class="text-sm font-medium text-green-800 mb-1">Generic Substitution</div>
+                                <div class="flex items-center">
+                                    <div class="h-2 w-full bg-gray-200 rounded-full">
+                                        <div class="h-2 bg-green-600 rounded-full" style="width: 18%"></div>
+                                    </div>
+                                    <span class="text-xs ml-2 text-green-800 font-medium">18%</span>
+                                </div>
+                                <div class="text-xs text-green-800 mt-1">$5.6M opportunity</div>
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded-lg">
+                                <div class="text-sm font-medium text-purple-800 mb-1">ER to Urgent Care Shift</div>
+                                <div class="flex items-center">
+                                    <div class="h-2 w-full bg-gray-200 rounded-full">
+                                        <div class="h-2 bg-purple-600 rounded-full" style="width: 12%"></div>
+                                    </div>
+                                    <span class="text-xs ml-2 text-purple-800 font-medium">12%</span>
+                                </div>
+                                <div class="text-xs text-purple-800 mt-1">$3.8M opportunity</div>
+                            </div>
+                            <div class="bg-yellow-50 p-2 rounded-lg">
+                                <div class="text-sm font-medium text-yellow-800 mb-1">Telemedicine Adoption</div>
+                                <div class="flex items-center">
+                                    <div class="h-2 w-full bg-gray-200 rounded-full">
+                                        <div class="h-2 bg-yellow-600 rounded-full" style="width: 6%"></div>
+                                    </div>
+                                    <span class="text-xs ml-2 text-yellow-800 font-medium">6%</span>
+                                </div>
+                                <div class="text-xs text-yellow-800 mt-1">$1.8M opportunity</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page-indicator">4 / 8</div>
+        </div>
+    </div>
+    
+    <script>
+        // Pharmacy Claims Chart
+        const pharmacyCtx = document.getElementById('pharmacyClaimsChart').getContext('2d');
+        const pharmacyChart = new Chart(pharmacyCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Brand',
+                        data: [22, 24, 21, 25, 28, 30, 32, 33, 31, 34, 36, 38],
+                        borderColor: 'rgba(59, 130, 246, 0.8)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Generic',
+                        data: [14, 13, 12, 13, 10, 12, 11, 13, 14, 15, 14, 13],
+                        borderColor: 'rgba(16, 185, 129, 0.8)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Specialty',
+                        data: [48, 52, 55, 58, 62, 65, 68, 70, 72, 74, 76, 78],
+                        borderColor: 'rgba(251, 191, 36, 0.8)',
+                        backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Millions ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value + 'M';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Service Type Chart
+        const serviceCtx = document.getElementById('serviceTypeChart').getContext('2d');
+        const serviceChart = new Chart(serviceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Inpatient', 'Outpatient', 'Emergency', 'Professional', 'Pharmacy', 'Other'],
+                datasets: [{
+                    data: [32, 26, 18, 14, 8, 2],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(251, 191, 36, 0.8)',
+                        'rgba(107, 114, 128, 0.8)'
+                    ],
+                    borderWidth: 1,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + '% of total claims';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

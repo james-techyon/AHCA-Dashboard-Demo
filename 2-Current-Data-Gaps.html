@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHCA Medicaid Analytics Solution - Current Data Gaps</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .slide-background .pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(42, 163, 139, 0.05) 0%, rgba(42, 163, 139, 0) 20%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0) 20%);
+        }
+        .slide-background .accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #2aa38b, #3b82f6);
+        }
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 20px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .gap-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-left: 5px solid;
+            transition: transform 0.2s;
+        }
+        .gap-card:hover {
+            transform: translateX(5px);
+        }
+        .gap-card.red {
+            border-left-color: #ef4444;
+        }
+        .gap-card.orange {
+            border-left-color: #f59e0b;
+        }
+        .gap-card.blue {
+            border-left-color: #3b82f6;
+        }
+        .gap-card.green {
+            border-left-color: #10b981;
+        }
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .page-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-background">
+            <div class="pattern"></div>
+            <div class="accent"></div>
+        </div>
+        
+        <div class="logo-container">
+            <span>AHCA Medicaid</span>
+        </div>
+        
+        <div class="slide-content">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Current Gaps in AHCA Medicaid Data Reporting</h1>
+                <p class="text-lg text-gray-600 mt-2">Identifying opportunities to enhance data-driven decision making</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6 mt-4">
+                <div class="gap-card red">
+                    <div class="flex items-start">
+                        <i class="fas fa-database text-red-500 text-xl mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Fragmented Data Sources</h3>
+                            <p class="text-gray-600">Limited integration between clinical, financial, and social determinants data creates siloed analysis and incomplete insights for decision-makers.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gap-card orange">
+                    <div class="flex items-start">
+                        <i class="fas fa-chart-line text-orange-500 text-xl mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Reactive vs. Predictive Analytics</h3>
+                            <p class="text-gray-600">Current reporting primarily identifies historical issues rather than forecasting emerging risks or high-cost utilization patterns.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gap-card blue">
+                    <div class="flex items-start">
+                        <i class="fas fa-users text-blue-500 text-xl mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Limited Cohort Analysis</h3>
+                            <p class="text-gray-600">Insufficient tools for analyzing specific member groups across multiple dimensions (clinical, financial, social determinants) hinders targeted intervention design.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gap-card green">
+                    <div class="flex items-start">
+                        <i class="fas fa-hospital-user text-green-500 text-xl mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Provider Performance Insights</h3>
+                            <p class="text-gray-600">Current provider analytics lack comprehensive views that combine quality metrics, cost efficiency, and population health outcomes.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 rounded-lg p-4 mt-6 border border-blue-100">
+                <div class="flex items-start">
+                    <div class="info-icon">
+                        <i class="fas fa-info-circle text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-800">Key Finding</h3>
+                        <p class="text-gray-600">While AHCA provides valuable reporting through dashboards like the Medicaid Enrollment Dashboard and Quality Initiatives Dashboard, there is significant opportunity to enhance data integration, add predictive capabilities, and provide more detailed drill-down views for targeted population management.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page-indicator">2 / 8</div>
+        </div>
+    </div>
+</body>
+</html>

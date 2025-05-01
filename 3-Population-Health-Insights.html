@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHCA Medicaid Analytics Solution - Population Health Insights</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .slide-background .pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(42, 163, 139, 0.05) 0%, rgba(42, 163, 139, 0) 20%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0) 20%);
+        }
+        .slide-background .accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #2aa38b, #3b82f6);
+        }
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            padding: 50px 60px;
+            height: 620px;
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 20px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            height: 240px;
+            margin-top: 10px;
+        }
+        .feature-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: 100%;
+            transition: transform 0.2s;
+            border-top: 4px solid #3b82f6;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-card.green {
+            border-top-color: #2aa38b;
+        }
+        .feature-card.blue {
+            border-top-color: #3b82f6;
+        }
+        .feature-card.purple {
+            border-top-color: #8b5cf6;
+        }
+        .info-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .risk-stratification {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .risk-level {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .risk-bar {
+            height: 20px;
+            border-radius: 10px;
+            background: #e5e7eb;
+            position: relative;
+            overflow: hidden;
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+        .risk-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            border-radius: 10px;
+        }
+        .page-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-background">
+            <div class="pattern"></div>
+            <div class="accent"></div>
+        </div>
+        
+        <div class="logo-container">
+            <span>AHCA Medicaid</span>
+        </div>
+        
+        <div class="slide-content">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Module 1: Population Health Insights</h1>
+                <p class="text-gray-600 mt-1">Interactive analytics on chronic conditions, preventative care utilization, and social determinants of health</p>
+            </div>
+            
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Left Column -->
+                <div class="col-span-7">
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Chronic Condition Prevalence</h3>
+                            <div class="text-sm text-blue-600 cursor-pointer"><i class="fas fa-filter"></i> Filter</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chronicConditionsChart"></canvas>
+                        </div>
+                        <div class="flex mt-2 justify-end">
+                            <div class="text-xs text-gray-500 italic">Click on conditions to see detailed outcomes and costs</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Preventative Care Utilization</h3>
+                            <div class="text-sm text-blue-600 cursor-pointer"><i class="fas fa-calendar-alt"></i> Time Period</div>
+                        </div>
+                        <div class="chart-container" style="height: 220px;">
+                            <canvas id="preventativeCareChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="col-span-5">
+                    <div class="grid grid-rows-3 gap-4 h-full">
+                        <div class="feature-card blue">
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-user-md text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">High-Risk Member Identification</h3>
+                                    <p class="text-sm text-gray-600 mt-1">Predictive algorithms identify members at risk of adverse health events before they occur, enabling proactive intervention.</p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <span class="info-pill bg-blue-100 text-blue-800">23% Higher Accuracy</span>
+                                <span class="info-pill bg-green-100 text-green-800">$4.2M Potential Savings</span>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-card green">
+                            <div class="flex items-start">
+                                <div class="bg-green-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-heartbeat text-green-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">SDOH Integration</h3>
+                                    <p class="text-sm text-gray-600 mt-1">Incorporates housing, transportation, and food security data to provide a holistic view of member health factors.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <h4 class="font-semibold text-sm text-gray-700">Member Risk Stratification</h4>
+                                <div class="risk-stratification">
+                                    <div class="risk-level">
+                                        <span class="text-xs w-24">High Risk</span>
+                                        <div class="risk-bar">
+                                            <div class="risk-fill bg-red-500" style="width: 18%;"></div>
+                                        </div>
+                                        <span class="text-xs ml-2">18%</span>
+                                    </div>
+                                    <div class="risk-level">
+                                        <span class="text-xs w-24">Medium Risk</span>
+                                        <div class="risk-bar">
+                                            <div class="risk-fill bg-yellow-500" style="width: 32%;"></div>
+                                        </div>
+                                        <span class="text-xs ml-2">32%</span>
+                                    </div>
+                                    <div class="risk-level">
+                                        <span class="text-xs w-24">Low Risk</span>
+                                        <div class="risk-bar">
+                                            <div class="risk-fill bg-green-500" style="width: 50%;"></div>
+                                        </div>
+                                        <span class="text-xs ml-2">50%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="feature-card purple">
+                            <div class="flex items-start">
+                                <div class="bg-purple-100 p-2 rounded-lg mr-3">
+                                    <i class="fas fa-bullseye text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">Targeted Intervention Recommendations</h3>
+                                    <p class="text-sm text-gray-600 mt-1">AI-driven analytics suggest evidence-based interventions to address identified health gaps and preventative care needs.</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 bg-gray-50 p-2 rounded-lg">
+                                <div class="text-sm font-semibold text-gray-700">Key Benefits:</div>
+                                <div class="grid grid-cols-2 gap-2 mt-1">
+                                    <div class="flex items-center text-xs text-gray-600">
+                                        <i class="fas fa-check-circle text-green-500 mr-1"></i> 32% Reduced ED Visits
+                                    </div>
+                                    <div class="flex items-center text-xs text-gray-600">
+                                        <i class="fas fa-check-circle text-green-500 mr-1"></i> 28% Lower Readmissions
+                                    </div>
+                                    <div class="flex items-center text-xs text-gray-600">
+                                        <i class="fas fa-check-circle text-green-500 mr-1"></i> 15% Cost Reduction
+                                    </div>
+                                    <div class="flex items-center text-xs text-gray-600">
+                                        <i class="fas fa-check-circle text-green-500 mr-1"></i> Improved HEDIS Scores
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page-indicator">3 / 8</div>
+        </div>
+    </div>
+    
+    <script>
+        // Chronic Conditions Chart
+        const chronicCtx = document.getElementById('chronicConditionsChart').getContext('2d');
+        const chronicChart = new Chart(chronicCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Diabetes', 'Hypertension', 'Asthma', 'COPD', 'CHF', 'Obesity', 'Mental Health'],
+                datasets: [{
+                    label: 'Prevalence (%)',
+                    data: [14.2, 29.6, 9.8, 5.2, 3.7, 27.3, 18.5],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(251, 191, 36, 0.7)',
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(139, 92, 246, 0.7)',
+                        'rgba(236, 72, 153, 0.7)',
+                        'rgba(75, 85, 99, 0.7)'
+                    ],
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 35,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + '% of members';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Preventative Care Chart
+        const preventativeCtx = document.getElementById('preventativeCareChart').getContext('2d');
+        const preventativeChart = new Chart(preventativeCtx, {
+            type: 'line',
+            data: {
+                labels: ['Q1 2023', 'Q2 2023', 'Q3 2023', 'Q4 2023', 'Q1 2024', 'Q2 2024'],
+                datasets: [
+                    {
+                        label: 'Well Visits',
+                        data: [42, 45, 48, 51, 54, 57],
+                        borderColor: 'rgba(59, 130, 246, 0.8)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Immunizations',
+                        data: [68, 70, 72, 75, 78, 80],
+                        borderColor: 'rgba(16, 185, 129, 0.8)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Cancer Screenings',
+                        data: [35, 38, 41, 45, 49, 52],
+                        borderColor: 'rgba(139, 92, 246, 0.8)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + '% utilization';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

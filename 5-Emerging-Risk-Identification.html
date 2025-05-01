@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHCA Medicaid Analytics Solution - Emerging Risk Identification</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .slide-background .pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(42, 163, 139, 0.05) 0%, rgba(42, 163, 139, 0) 20%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0) 20%);
+        }
+        .slide-background .accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #2aa38b, #3b82f6);
+        }
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            padding: 50px 60px;
+            height: 620px;
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 20px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            height: 220px;
+            margin-top: 10px;
+        }
+        .small-chart-container {
+            position: relative;
+            height: 180px;
+            margin-top: 5px;
+        }
+        .feature-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            height: 100%;
+            transition: transform 0.2s;
+        }
+        .feature-card:hover {
+            transform: translateY(-3px);
+        }
+        .alert-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+        .alert-card:hover {
+            transform: translateX(5px);
+        }
+        .alert-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .risk-level {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+        .heatmap-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(10, 18px);
+            gap: 2px;
+            margin-top: 8px;
+        }
+        .heatmap-cell {
+            border-radius: 2px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .heatmap-cell:hover {
+            transform: scale(1.2);
+            z-index: 10;
+        }
+        .data-source-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 6px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        .page-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-background">
+            <div class="pattern"></div>
+            <div class="accent"></div>
+        </div>
+        
+        <div class="logo-container">
+            <span>AHCA Medicaid</span>
+        </div>
+        
+        <div class="slide-content">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Module 3: Emerging Risk Identification</h1>
+                <p class="text-gray-600 mt-1">Predictive analytics to flag potential high-cost members, early intervention opportunities, and utilization anomalies</p>
+            </div>
+            
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Left Column - Risk Prediction -->
+                <div class="col-span-7">
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Projected High-Cost Member Prediction</h3>
+                            <div class="flex space-x-2">
+                                <div class="text-xs py-1 px-2 bg-blue-50 text-blue-600 rounded-md cursor-pointer">Next 30 Days</div>
+                                <div class="text-xs py-1 px-2 bg-gray-100 text-gray-600 rounded-md cursor-pointer">Next 90 Days</div>
+                                <div class="text-xs py-1 px-2 bg-gray-100 text-gray-600 rounded-md cursor-pointer">Next 180 Days</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="costPredictionChart"></canvas>
+                        </div>
+                        <div class="flex mt-2 text-xs items-center justify-between">
+                            <div class="flex space-x-3">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded bg-green-500 mr-1"></div>
+                                    <span>Low Risk ($0-1k)</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded bg-yellow-500 mr-1"></div>
+                                    <span>Medium Risk ($1k-5k)</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 rounded bg-red-500 mr-1"></div>
+                                    <span>High Risk ($5k+)</span>
+                                </div>
+                            </div>
+                            <div class="text-blue-600 cursor-pointer">
+                                <i class="fas fa-user-md mr-1"></i> View Intervention Opportunities
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">
+                                Cost Surge Detection & Alert System
+                                <span class="ml-2 px-2 py-1 bg-red-100 text-red-600 text-xs rounded-md">3 Active Alerts</span>
+                            </h3>
+                            <div class="text-sm text-blue-600 cursor-pointer"><i class="fas fa-bell"></i></div>
+                        </div>
+                        
+                        <div class="alert-card border-red-500">
+                            <div class="alert-icon bg-red-100 text-red-600">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-800 flex items-center">
+                                    Dialysis Claims Surge
+                                    <span class="risk-level bg-red-100 text-red-600">Critical</span>
+                                </div>
+                                <div class="text-xs text-gray-600">42% increase in Region 3 over past 14 days across providers</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-card border-yellow-500">
+                            <div class="alert-icon bg-yellow-100 text-yellow-600">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-800 flex items-center">
+                                    Behavioral Health Readmissions
+                                    <span class="risk-level bg-yellow-100 text-yellow-600">Warning</span>
+                                </div>
+                                <div class="text-xs text-gray-600">23% increase in 30-day readmission rate for facilities in Region 5</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-card border-blue-500">
+                            <div class="alert-icon bg-blue-100 text-blue-600">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-800 flex items-center">
+                                    Specialty Drug Authorization 
+                                    <span class="risk-level bg-blue-100 text-blue-600">Monitoring</span>
+                                </div>
+                                <div class="text-xs text-gray-600">15% increase in high-cost specialty drug authorizations for autoimmune conditions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - SDOH & External Data Integration -->
+                <div class="col-span-5">
+                    <div class="feature-card border-t-4 border-blue-500 mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-semibold text-gray-700">Regional Risk Heatmap</h3>
+                            <div class="text-xs text-blue-600">
+                                Hover for details
+                            </div>
+                        </div>
+                        
+                        <div class="small-chart-container">
+                            <div class="heatmap-container" id="riskHeatmap">
+                                <!-- Generated via JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-2 text-xs">
+                            <div class="flex items-center">
+                                <div class="w-16 h-3 rounded bg-gradient-to-r from-green-500 via-yellow-500 to-red-500"></div>
+                                <div class="flex justify-between w-16 ml-1">
+                                    <span>Low</span>
+                                    <span>High</span>
+                                </div>
+                            </div>
+                            <div>
+                                <select class="text-xs border border-gray-300 rounded px-1 py-0.5">
+                                    <option>Cost Risk</option>
+                                    <option>Utilization Risk</option>
+                                    <option>Readmission Risk</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card border-t-4 border-green-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-semibold text-gray-700">Integrated External Data Sources</h3>
+                            <span class="badge bg-green-100 text-green-700">Live Data</span>
+                        </div>
+                        
+                        <div class="text-xs text-gray-600 mb-2">
+                            Our risk prediction models integrate diverse data sources for a comprehensive view of emerging risks.
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <div class="data-source-label bg-blue-100 text-blue-700">Social Determinants</div>
+                                <div class="text-xs space-y-2">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-home text-blue-500 mr-2"></i>
+                                        <span>Housing Stability Index</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-bus text-blue-500 mr-2"></i>
+                                        <span>Transportation Access</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-apple-alt text-blue-500 mr-2"></i>
+                                        <span>Food Security Data</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-purple-50 p-3 rounded-lg">
+                                <div class="data-source-label bg-purple-100 text-purple-700">Digital Health</div>
+                                <div class="text-xs space-y-2">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-mobile-alt text-purple-500 mr-2"></i>
+                                        <span>Remote Monitoring</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-heartbeat text-purple-500 mr-2"></i>
+                                        <span>Wearable Device Data</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-pills text-purple-500 mr-2"></i>
+                                        <span>Medication Adherence</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-green-50 p-3 rounded-lg">
+                                <div class="data-source-label bg-green-100 text-green-700">Environmental</div>
+                                <div class="text-xs space-y-2">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-cloud text-green-500 mr-2"></i>
+                                        <span>Air Quality Index</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-temperature-high text-green-500 mr-2"></i>
+                                        <span>Extreme Weather Events</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-green-500 mr-2"></i>
+                                        <span>Environmental Hazards</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-yellow-50 p-3 rounded-lg">
+                                <div class="data-source-label bg-yellow-100 text-yellow-700">Community Health</div>
+                                <div class="text-xs space-y-2">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-virus text-yellow-500 mr-2"></i>
+                                        <span>Outbreak Surveillance</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-stethoscope text-yellow-500 mr-2"></i>
+                                        <span>Community Screening</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-chart-line text-yellow-500 mr-2"></i>
+                                        <span>Population Trends</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3 bg-blue-50 p-2 rounded-lg text-xs text-blue-800">
+                            <div class="flex items-start">
+                                <i class="fas fa-lightbulb text-blue-500 mt-0.5 mr-2"></i>
+                                <div>
+                                    <span class="font-semibold">Insight:</span> Integrating these data sources has improved risk prediction accuracy by 38% and reduced false positives by 42% compared to claims-only models.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page-indicator">5 / 8</div>
+        </div>
+    </div>
+    
+    <script>
+        // Cost Prediction Chart
+        const predictionCtx = document.getElementById('costPredictionChart').getContext('2d');
+        const predictionChart = new Chart(predictionCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Diabetes', 'Hypertension', 'COPD', 'CHF', 'Behavioral Health', 'Renal Disease', 'Cancer'],
+                datasets: [
+                    {
+                        label: 'Low Risk Members',
+                        data: [1420, 2650, 680, 520, 1250, 380, 520],
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Medium Risk Members',
+                        data: [780, 1240, 450, 380, 950, 240, 360],
+                        backgroundColor: 'rgba(251, 191, 36, 0.7)',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'High Risk Members',
+                        data: [320, 480, 190, 240, 520, 180, 210],
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Members'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' members';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Create Risk Heatmap
+        const heatmapContainer = document.getElementById('riskHeatmap');
+        
+        // Generate random risk values
+        function getRandomRisk() {
+            const randomValue = Math.random();
+            if (randomValue < 0.6) {
+                return `rgba(16, 185, 129, ${0.3 + Math.random() * 0.5})`; // Green (low risk)
+            } else if (randomValue < 0.85) {
+                return `rgba(251, 191, 36, ${0.3 + Math.random() * 0.5})`; // Yellow (medium risk)
+            } else {
+                return `rgba(239, 68, 68, ${0.3 + Math.random() * 0.5})`; // Red (high risk)
+            }
+        }
+        
+        // Create the heatmap cells
+        for (let i = 0; i < 120; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell';
+            cell.style.backgroundColor = getRandomRisk();
+            
+            // Tooltip effect on hover
+            cell.title = `Region ${Math.floor(i/12) + 1}, Area ${i % 12 + 1}\nRisk Score: ${Math.floor(Math.random() * 100)}/100`;
+            
+            heatmapContainer.appendChild(cell);
+        }
+    </script>
+</body>
+</html>

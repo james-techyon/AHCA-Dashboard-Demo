@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AHCA Medicaid Analytics Solution - Implementation Benefits & ROI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .slide-container {
+            width: 1280px;
+            min-height: 720px;
+            background: linear-gradient(to bottom right, #ffffff, #f0f9ff);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .slide-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .slide-background .pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(42, 163, 139, 0.05) 0%, rgba(42, 163, 139, 0) 20%),
+                radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0) 20%);
+        }
+        .slide-background .accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #2aa38b, #3b82f6);
+        }
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            padding: 50px 60px;
+            height: 620px;
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            font-size: 20px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .chart-container {
+            position: relative;
+            height: 220px;
+        }
+        .benefit-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .benefit-card:hover {
+            transform: translateY(-5px);
+        }
+        .benefit-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        .timeline-container {
+            display: flex;
+            margin-top: 15px;
+            position: relative;
+            justify-content: space-between;
+        }
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #e5e7eb;
+            z-index: 1;
+        }
+        .timeline-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            width: 20%;
+        }
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+        .timeline-label {
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            width: 100%;
+        }
+        .timeline-description {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-top: 4px;
+            width: 90%;
+        }
+        .timeline-active .timeline-dot {
+            border-color: #3b82f6;
+            background: #3b82f6;
+        }
+        .timeline-complete .timeline-dot {
+            border-color: #10b981;
+            background: #10b981;
+        }
+        .timeline-pending .timeline-dot {
+            border-color: #d1d5db;
+        }
+        .timeline-complete .timeline-label {
+            color: #10b981;
+        }
+        .timeline-active .timeline-label {
+            color: #3b82f6;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        .savings-indicator {
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 20px;
+            padding: 4px 12px;
+            color: #10b981;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .page-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-background">
+            <div class="pattern"></div>
+            <div class="accent"></div>
+        </div>
+        
+        <div class="logo-container">
+            <span>AHCA Medicaid</span>
+        </div>
+        
+        <div class="slide-content">
+            <div class="mb-6">
+                <h1 class="text-3xl font-bold text-gray-800">Implementation Benefits & ROI</h1>
+                <p class="text-gray-600 mt-1">Comprehensive benefits, projected savings, and implementation approach for the AHCA Medicaid Analytics Solution</p>
+            </div>
+            
+            <div class="grid grid-cols-12 gap-6">
+                <!-- Left Column - Benefits & ROI -->
+                <div class="col-span-8">
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="font-semibold text-gray-700">Projected 3-Year ROI and Savings</h3>
+                            <div class="text-sm text-blue-600 cursor-pointer">Full Report <i class="fas fa-arrow-right text-xs"></i></div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="roiChart"></canvas>
+                        </div>
+                        <div class="flex justify-between mt-3 text-xs text-gray-600">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded bg-blue-500 mr-1"></div>
+                                <span>Initial Investment</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded bg-green-500 mr-1"></div>
+                                <span>Cumulative Savings</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded bg-purple-500 mr-1"></div>
+                                <span>Net Benefit</span>
+                            </div>
+                            <div class="text-blue-600 cursor-pointer">
+                                <i class="fas fa-calculator mr-1"></i> Customize ROI Calculation
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="benefit-card">
+                            <div class="benefit-icon bg-blue-100 text-blue-600">
+                                <i class="fas fa-heartbeat text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-800 mb-2">Improved Health Outcomes</h3>
+                            <p class="text-sm text-gray-600 mb-3">Early intervention and care gap closure reduces complications and improves quality of life.</p>
+                            <div class="mt-auto">
+                                <div class="grid grid-cols-2 gap-2 text-center">
+                                    <div>
+                                        <div class="text-blue-600 font-bold text-xl">32%</div>
+                                        <div class="text-xs text-gray-500">Reduced ED Visits</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-blue-600 font-bold text-xl">28%</div>
+                                        <div class="text-xs text-gray-500">Lower Readmission</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-card">
+                            <div class="benefit-icon bg-green-100 text-green-600">
+                                <i class="fas fa-dollar-sign text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-800 mb-2">Cost Reduction</h3>
+                            <p class="text-sm text-gray-600 mb-3">Identifies inefficiencies, redundancies, and fraud to optimize program spending.</p>
+                            <div class="mt-auto">
+                                <div class="grid grid-cols-2 gap-2 text-center">
+                                    <div>
+                                        <div class="text-green-600 font-bold text-xl">$68M</div>
+                                        <div class="text-xs text-gray-500">Annual Savings</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-green-600 font-bold text-xl">12%</div>
+                                        <div class="text-xs text-gray-500">Cost Reduction</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="benefit-card">
+                            <div class="benefit-icon bg-purple-100 text-purple-600">
+                                <i class="fas fa-cogs text-xl"></i>
+                            </div>
+                            <h3 class="font-semibold text-gray-800 mb-2">Operational Efficiency</h3>
+                            <p class="text-sm text-gray-600 mb-3">Streamlines workflows and enables data-driven decision making across all levels.</p>
+                            <div class="mt-auto">
+                                <div class="grid grid-cols-2 gap-2 text-center">
+                                    <div>
+                                        <div class="text-purple-600 font-bold text-xl">45%</div>
+                                        <div class="text-xs text-gray-500">Faster Reporting</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-purple-600 font-bold text-xl">3.5x</div>
+                                        <div class="text-xs text-gray-500">Staff Productivity</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column - Implementation Timeline -->
+                <div class="col-span-4">
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-5">
+                        <h3 class="font-semibold text-gray-700 mb-3">Key Performance Metrics</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="metric-value text-blue-600">87%</div>
+                                    <div class="metric-label">HEDIS Score Improvement</div>
+                                </div>
+                                <div class="savings-indicator">
+                                    <i class="fas fa-arrow-up mr-1"></i> 24 points
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="metric-value text-green-600">$216</div>
+                                    <div class="metric-label">PMPM Cost Reduction</div>
+                                </div>
+                                <div class="savings-indicator">
+                                    <i class="fas fa-arrow-down mr-1"></i> 18.4%
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <div class="metric-value text-purple-600">94%</div>
+                                    <div class="metric-label">Care Gap Closure Rate</div>
+                                </div>
+                                <div class="savings-indicator">
+                                    <i class="fas fa-arrow-up mr-1"></i> 32.5%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <h3 class="font-semibold text-gray-700 mb-2">Implementation Roadmap</h3>
+                        <p class="text-xs text-gray-600 mb-3">Phased approach ensures rapid value realization and stakeholder adoption</p>
+                        
+                        <div class="timeline-container">
+                            <div class="timeline-node timeline-complete">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-label">Phase 1</div>
+                                <div class="timeline-description">Data Integration</div>
+                            </div>
+                            
+                            <div class="timeline-node timeline-active">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-label">Phase 2</div>
+                                <div class="timeline-description">Analytics Deployment</div>
+                            </div>
+                            
+                            <div class="timeline-node timeline-pending">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-label">Phase 3</div>
+                                <div class="timeline-description">Predictive Modeling</div>
+                            </div>
+                            
+                            <div class="timeline-node timeline-pending">
+                                <div class="timeline-dot"></div>
+                                <div class="timeline-label">Phase 4</div>
+                                <div class="timeline-description">Intervention Programs</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 p-3 rounded-lg mt-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2"></i>
+                                <div>
+                                    <h4 class="text-sm font-semibold text-blue-800">Current Status: Phase 2</h4>
+                                    <p class="text-xs text-blue-700 mt-1">
+                                        Dashboard deployment complete. Provider performance metrics and risk stratification models in final testing. Expected completion in 6 weeks.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page-indicator">7 / 8</div>
+        </div>
+    </div>
+    
+    <script>
+        // ROI Chart
+        const roiCtx = document.getElementById('roiChart').getContext('2d');
+        const roiChart = new Chart(roiCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Year 1', 'Year 2', 'Year 3'],
+                datasets: [
+                    {
+                        label: 'Initial Investment',
+                        data: [4.2, 1.8, 1.2],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderRadius: 4,
+                        order: 3
+                    },
+                    {
+                        label: 'Cumulative Savings',
+                        data: [18.5, 52.3, 97.6],
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Net Benefit',
+                        data: [14.3, 50.5, 96.4],
+                        type: 'line',
+                        borderColor: 'rgba(139, 92, 246, 0.8)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: 'rgba(139, 92, 246, 1)',
+                        fill: false,
+                        tension: 0.1,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Millions ($)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value + 'M';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y + 'M';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
